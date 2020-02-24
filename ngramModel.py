@@ -37,9 +37,7 @@ class NGramModel(object):
         Make sure you are not modifying the original text
         parameter in this function.
         """
-        textCopy = []
-
-        # add the rest of your prepData implementation here
+        textCopy = text[:]
 
         return textCopy
 

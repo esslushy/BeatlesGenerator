@@ -28,7 +28,7 @@ def get_lyrics(link):
     # Take it out of the double dimensioned array caused by the split
     lyrics = lyrics[0] 
     # Remove excess whitespace and split on word level
-    lyrics = [lyric.strip().split(' ') for lyric in lyrics]
+    lyrics = [lyric.strip().split(' ') for lyric in lyrics if lyric]
     return lyrics
 
 # Get website data into a soup
@@ -44,7 +44,5 @@ for link in song_links:
     song = get_lyrics(link)
     if song is not None:
         lyrics.extend(song)
-# Remove all empty strings
-lyrics = [lyric for lyric in lyrics if lyric]
 print(lyrics)
 pickle.dump(lyrics, open('dataset/songs.pickle', 'wb'))
