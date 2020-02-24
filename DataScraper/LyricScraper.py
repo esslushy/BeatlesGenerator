@@ -27,8 +27,8 @@ def get_lyrics(link):
     lyrics = [lyric.lower().split('\n') for lyric in lyrics]
     # Take it out of the double dimensioned array caused by the split
     lyrics = lyrics[0] 
-    # Remove excess whitespace
-    lyrics = [lyric.strip() for lyric in lyrics]
+    # Remove excess whitespace and split on word level
+    lyrics = [lyric.strip().split(' ') for lyric in lyrics]
     return lyrics
 
 # Get website data into a soup

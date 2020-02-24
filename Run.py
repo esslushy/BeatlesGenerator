@@ -1,1 +1,1 @@
-from Generator import ngramModel
+from ngramModel import NGramModel
