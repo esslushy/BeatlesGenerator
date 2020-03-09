@@ -168,7 +168,7 @@ class BiGramModel(NGramModel):
         # Loop through each line of lyrics
         for lyrics in text:
             # Loop through each pair of words in the lyrics. Start at 0 and go to the 2nd to last word.
-            for i in range(len(lyrics)):
+            for i in range(len(lyrics)-1):
                 # Get the primary word
                 word = lyrics[i]
                 # Get the following word
@@ -216,5 +216,5 @@ if __name__ == '__main__':
     # add your own testing code here if you like
     data = nGramModel.prepData(text)
     nGramModel.trainModel(data)
-    print(nGramModel.getCandidateDictionary(data[0]))
-    print(nGramModel.getNextToken(['the', 'quick']))
+    print(nGramModel.getCandidateDictionary(['the']))
+    print(nGramModel.getNextToken(['the']))
