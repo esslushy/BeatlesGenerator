@@ -1,9 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 import random
-from unigramModel import *
-from bigramModel import *
-from trigramModel import *
+import pickle
+from ngramModel import UniGramModel, BiGramModel, TriGramModel
 
 # -----------------------------------------------------------------------------
 # Core ------------------------------------------------------------------------
@@ -12,7 +11,7 @@ from trigramModel import *
 
 def trainLyricsModels(lyricsDirectory):
     """
-    loads lyrics data from the data/lyrics/<lyricsDirectory> folder
+    loads lyrics data from the dataset/<lyricsDirectory> folder
     using the pre-written DataLoader class, then creates an
     instance of each of the NGramModel child classes and trains
     them using the text loaded from the data loader. The list
@@ -20,12 +19,15 @@ def trainLyricsModels(lyricsDirectory):
 
     Returns the list of trained models.
     """
-    #Load your data here
-    
-    models = [TrigramModel(), BigramModel(), UnigramModel()]
-
-    # add rest of trainLyricsModels implementation here
-
+    # Load your data here
+    raw_data = pickle.load(open('dataset/' + lyricsDirectory, 'rb'))
+    # Construct models
+    models = [TriGramModel(), BiGramModel(), UniGramModel()]
+    # Process data
+    data = models[0].prepData(raw_data)
+    # Train each model
+    for model in models:
+        model.trainModel(data)
     return models
 
 def selectNGramModel(models, sentence):
@@ -38,7 +40,10 @@ def selectNGramModel(models, sentence):
     wrote a function that checks if a model can be used to pick a
     word for a sentence!)
     """
-    return
+    # Find model that works
+    for model in models:
+        if model.trainingDataHasNGram(sentence):
+            return model
 
 def sentenceTooLong(desiredLength, currentLength):
     """
@@ -60,9 +65,20 @@ def generateSentence(models, desiredLength):
     any of the special starting or ending symbols.
     """
     sentence = ['^::^', '^:::^']
-
-    # add rest of generateSentence implementation here
-
+    # Repeat until sentence is long enough
+    while(not sentenceTooLong(desiredLength, len(sentence))):
+        # Choose model to use
+        model = selectNGramModel(models, sentence)
+        # Generate next token
+        next_token = model.getNextToken(sentence)
+        # If token is the end token break out and finish
+        if next_token == '$:::$':
+            break
+        # If it is not the end token, add it to the sentence and continue the loop
+        else:
+            sentence.append(next_token)
+    # Clear off starting tokens
+    sentence = sentence[2:]
     return sentence
 
 def printSongLyrics(verseOne, verseTwo, chorus):
@@ -75,7 +91,7 @@ def printSongLyrics(verseOne, verseTwo, chorus):
     print('\n'),
     for verse in verses:
         for line in verse:
-            print (' '.join(line)).capitalize()
+            print (' '.join(line).capitalize())
         print('\n'),
 
 def runLyricsGenerator(models):
@@ -84,19 +100,21 @@ def runLyricsGenerator(models):
     generates a verse one, a verse two, and a chorus, then
     calls printSongLyrics to print the song out.
     """
-    verseOne = []
-    verseTwo = []
-    chorus = []
-
-    # add rest of runLyricsGenerator implementation here
-
-    return
+    # Desired length
+    DESIRED_LENGTH = 50
+    # Generate lyrics
+    verseOne = [generateSentence(models, DESIRED_LENGTH) for i in range(4)]
+    verseTwo = [generateSentence(models, DESIRED_LENGTH) for i in range(4)]
+    chorus = [generateSentence(models, DESIRED_LENGTH) for i in range(4)]
+    # Print lyrics
+    printSongLyrics(verseOne, verseTwo, chorus)
+    return verseOne, verseTwo, chorus
 
 # -----------------------------------------------------------------------------
 # Main ------------------------------------------------------------------------
 
 def main():
-    lyricsDirectory = 'the_beatles'
+    lyricsDirectory = 'beatles_songs.pickle'
 
     print('Starting program and loading data...')
     lyricsModels = trainLyricsModels(lyricsDirectory)

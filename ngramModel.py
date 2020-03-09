@@ -37,18 +37,15 @@ class NGramModel(object):
         Make sure you are not modifying the original lyrics
         parameter in this function.
         """
-        # Store data
-        processed_lyrics = []
-        for lyric in lyrics:
-            # Copy text
-            lyric_copy = lyric[:]
+        # Create a new version of the list to modify
+        processed_lyrics = lyrics.copy()
+        for lyric in processed_lyrics:
             # Add the beginning tokens
-            lyric_copy.insert(0, '^::^')
-            lyric_copy.insert(1, '^:::^')
+            lyric.insert(0, '^::^')
+            lyric.insert(1, '^:::^')
             # Add the end tokens
-            lyric_copy.append('$:::$')
+            lyric.append('$:::$')
             # Add to final array
-            processed_lyrics.append(lyric_copy)
         return processed_lyrics
 
     def trainModel(self, text):
