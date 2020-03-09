@@ -24,22 +24,32 @@ class NGramModel(object):
         """
         return 'This is an NGramModel object'
 
-    def prepData(self, text):
+    def prepData(self, lyrics):
         """
-        Requires: text is a list of lists of strings
-        returns a copy of text where each inner list starts with
+        Requires: lyrics is a list of lists of strings
+        returns a copy of lyrics where each inner list starts with
         the symbols '^::^' and '^:::^', and ends with the symbol
-        '$:::$'. For example, if an inner list in text were
+        '$:::$'. For example, if an inner list in lyrics were
         ['hello', 'goodbye'], that list would become
         ['^::^', '^:::^', 'hello', 'goodbye', '$:::$'] in the
         returned copy.
 
-        Make sure you are not modifying the original text
+        Make sure you are not modifying the original lyrics
         parameter in this function.
         """
-        textCopy = text[:]
-
-        return textCopy
+        # Store data
+        processed_lyrics = []
+        for lyric in lyrics:
+            # Copy text
+            lyric_copy = lyric[:]
+            # Add the beginning tokens
+            lyric_copy.insert(0, '^::^')
+            lyric_copy.insert(1, '^:::^')
+            # Add the end tokens
+            lyric_copy.append('$:::$')
+            # Add to final array
+            processed_lyrics.append(lyric_copy)
+        return processed_lyrics
 
     def trainModel(self, text):
         """
@@ -53,7 +63,7 @@ class NGramModel(object):
 
     def trainingDataHasNGram(self, sentence):
         """
-        sentence is a list of strings
+        Requires: sentence is a list of strings
         returns a bool indicating whether or not this n-gram model
         can be used to choose the next token for the current
         sentence. This function does not need to be modified because
@@ -75,11 +85,27 @@ class NGramModel(object):
     def weightedChoice(self, candidates):
         """
         Requires: candidates is a dictionary; the keys of candidates are items
-                  you want to choose from and the values are integers
+                  you want to choose from and the values are probability floats
         returns a candidate item (a key in the candidates dictionary)
         as described in the lesson.
+
+        This function works by giving each possible candidate a stretch the size of its probability
+        from 0 to 1 so that it is truncated proportionally for each candidate and the random number
+        that lands in a certain truncated section chooses that candidate. 
         """
-        return
+        # Get a random number between 0 and 1
+        rand_num = random.random()
+        # Sums all probabilities
+        total_probabilities = 0
+        for key, value in candidates.items():
+            # Increment total probabilities by the probability for the key
+            total_probabilities += value
+            # Check if the summed probabilities are equal to or greater than the random number
+            if total_probabilities >= rand_num:
+                # If they are return the word
+                return key
+        # In case all fails, have an emergency empty output.
+        return ''
 
     def getNextToken(self, sentence):
         """
@@ -88,8 +114,48 @@ class NGramModel(object):
         returns the next token to be added to sentence by calling
         the getCandidateDictionary and weightedChoice functions.
         """
-        return ''
+        return self.weightedChoice(self.getCandidateDictionary(sentence))
 
+
+class UniGramModel(NGramModel):
+
+    def trainModel(self, text):
+        """
+        Requires: text is a list of lists of strings
+        Populates the self.nGramCounts dictionary with unigrams
+        """
+        # Loop through each line of lyrics
+        for lyrics in text:
+            # Loop through each word of the lyrics
+            for word in lyrics:
+                # If the word already exists, increment by 1
+                if word in self.nGramCounts:
+                    self.nGramCounts[word] += 1
+                # If the word doesn't exist, add an entry to the nGram dictionary
+                else:
+                    self.nGramCounts[word] = 1
+
+    def trainingDataHasNGram(self, sentence):
+        """
+        Requires: sentence is a list of strings
+        Returns true if the last word of the sentence exists in the self.nGramCounts
+        """
+        return sentence[-1] in self.nGramCounts
+
+    def getCandidateDictionary(self, sentence):
+        """
+        Requires: sentence is a list of strings
+        returns a dictionary of words to be added to the next sentence
+        with the probability that each word would be added
+        """
+        # Sums all the counts of words
+        total_words = sum(self.nGramCounts.values())
+        # Make copy of dictionary
+        candidate_dictionary = self.nGramCounts.copy()
+        # Divides all counts of words by total words to get probability
+        for key in candidate_dictionary:
+            candidate_dictionary[key] /= total_words
+        return candidate_dictionary
 
 
 # -----------------------------------------------------------------------------
@@ -98,7 +164,9 @@ class NGramModel(object):
 if __name__ == '__main__':
     text = [ ['the', 'quick', 'brown', 'fox'], ['the', 'lazy', 'dog'] ]
     choices = { 'the': 2, 'quick': 1, 'brown': 1 }
-    nGramModel = NGramModel()
+    nGramModel = UniGramModel()
     # add your own testing code here if you like
-
-
+    data = nGramModel.prepData(text)
+    nGramModel.trainModel(data)
+    print(nGramModel.getCandidateDictionary(data[0]))
+    print(nGramModel.getNextToken(['the', 'quick']))
