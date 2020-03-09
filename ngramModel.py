@@ -138,9 +138,10 @@ class UniGramModel(NGramModel):
     def trainingDataHasNGram(self, sentence):
         """
         Requires: sentence is a list of strings
-        Returns true if the last word of the sentence exists in the self.nGramCounts
+        Always true as the model doesn't use context
         """
-        return sentence[-1] in self.nGramCounts
+        return True
+
 
     def getCandidateDictionary(self, sentence):
         """
@@ -157,6 +158,53 @@ class UniGramModel(NGramModel):
             candidate_dictionary[key] /= total_words
         return candidate_dictionary
 
+class BiGramModel(NGramModel):
+
+    def trainModel(self, text):
+        """
+        Requires: text is a list of lists of strings
+        Populates the self.nGramCounts dictionary with bigrams
+        """
+        # Loop through each line of lyrics
+        for lyrics in text:
+            # Loop through each pair of words in the lyrics. Start at 0 and go to the 2nd to last word.
+            for i in range(len(lyrics)):
+                # Get the primary word
+                word = lyrics[i]
+                # Get the following word
+                next_word = lyrics[i+1]
+                # If the word already exists check to see if the following word exists
+                if word in self.nGramCounts:
+                    if next_word in self.nGramCounts[word]:
+                        self.nGramCounts[word][next_word] += 1
+                    # If the following word does not exist, add a new entry to the dictionary.
+                    else:
+                        self.nGramCounts[word][next_word] = 1
+                # If the word doesn't exist, add an entry to the nGram dictionary
+                else:
+                    self.nGramCounts[word] = {next_word: 1}
+
+    def trainingDataHasNGram(self, sentence):
+        """
+        Requires: sentence is a list of strings
+        Returns true if the last word of the sentence exists in the self.nGramCounts
+        """
+        return sentence[-1] in self.nGramCounts
+
+    def getCandidateDictionary(self, sentence):
+        """
+        Requires: sentence is a list of strings
+        returns a dictionary of words to be added to the next sentence
+        with the probability that each word would be added
+        """
+        # Make copy of dictionary related to the final word of the sentence
+        candidate_dictionary = self.nGramCounts[sentence[-1]].copy()
+        # Sum all possible word choices in the dictionary
+        total_words = sum(candidate_dictionary.values())
+        # Divides all counts of words by total words to get probability
+        for key in candidate_dictionary:
+            candidate_dictionary[key] /= total_words
+        return candidate_dictionary
 
 # -----------------------------------------------------------------------------
 # Testing code ----------------------------------------------------------------
@@ -164,7 +212,7 @@ class UniGramModel(NGramModel):
 if __name__ == '__main__':
     text = [ ['the', 'quick', 'brown', 'fox'], ['the', 'lazy', 'dog'] ]
     choices = { 'the': 2, 'quick': 1, 'brown': 1 }
-    nGramModel = UniGramModel()
+    nGramModel = BiGramModel()
     # add your own testing code here if you like
     data = nGramModel.prepData(text)
     nGramModel.trainModel(data)
