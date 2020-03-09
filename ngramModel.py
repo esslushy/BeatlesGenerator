@@ -1,6 +1,6 @@
 import random
 import sys
-
+import warnings
 
 # -----------------------------------------------------------------------------
 # NGramModel class ------------------------------------------------------------
@@ -173,7 +173,7 @@ class BiGramModel(NGramModel):
                 word = lyrics[i]
                 # Get the following word
                 next_word = lyrics[i+1]
-                # If the word already exists check to see if the following word exists
+                # If the word already exists check to see if the following word exists. If it does, increment by 1
                 if word in self.nGramCounts:
                     if next_word in self.nGramCounts[word]:
                         self.nGramCounts[word][next_word] += 1
@@ -197,8 +197,73 @@ class BiGramModel(NGramModel):
         returns a dictionary of words to be added to the next sentence
         with the probability that each word would be added
         """
+        # Make sure data has the ngram being searched for. If not, return an empty dictionary.
+        if not self.trainingDataHasNGram(sentence):
+            warnings.warn('There is no Ngram with that value in the dataset.')
+            return {}
         # Make copy of dictionary related to the final word of the sentence
         candidate_dictionary = self.nGramCounts[sentence[-1]].copy()
+        # Sum all possible word choices in the dictionary
+        total_words = sum(candidate_dictionary.values())
+        # Divides all counts of words by total words to get probability
+        for key in candidate_dictionary:
+            candidate_dictionary[key] /= total_words
+        return candidate_dictionary
+
+class TriGramModel(NGramModel):
+
+    def trainModel(self, text):
+        """
+        Requires: text is a list of lists of strings
+        Populates the self.nGramCounts dictionary with bigrams
+        """
+        # Loop through each line of lyrics
+        for lyrics in text:
+            # Loop through each set of 3 words in the lyrics. Start at 0 and go to the 3rd to last word.
+            for i in range(len(lyrics)-2):
+                # Get the first word
+                first_word = lyrics[i]
+                # Get the second word
+                second_word = lyrics[i+1]
+                # Get the third word
+                third_word = lyrics[i+2]
+                # If the first word already exists check to see if the following words exist
+                if first_word in self.nGramCounts:
+                    # Check if the second word exists
+                    if second_word in self.nGramCounts[first_word]:
+                        # Check if the third word exists. If it does, increment by 1
+                        if third_word in self.nGramCounts[first_word][second_word]:
+                            self.nGramCounts[first_word][second_word][third_word] += 1
+                        # If the third word does not exist, add a new entry to the dictionary
+                        else:
+                            self.nGramCounts[first_word][second_word][third_word] = 1
+                    # If the second word does not exist, add a new entry to the dictionary.
+                    else:
+                        self.nGramCounts[first_word][second_word] = {third_word: 1}
+                # If the word doesn't exist, add an entry to the nGram dictionary
+                else:
+                    self.nGramCounts[first_word] = {second_word: {third_word: 1}}
+
+    def trainingDataHasNGram(self, sentence):
+        """
+        Requires: sentence is a list of strings
+        Returns true if the 2nd to last word of the sentence exists in the self.nGramCounts and 
+        the last word exists in self.nGramCounts[second_to_last_word]
+        """
+        return sentence[-2] in self.nGramCounts and sentence[-1] in self.nGramCounts[sentence[-2]]
+
+    def getCandidateDictionary(self, sentence):
+        """
+        Requires: sentence is a list of strings
+        returns a dictionary of words to be added to the next sentence
+        with the probability that each word would be added
+        """
+        # Make sure data has the ngram being searched for. If not, return an empty dictionary.
+        if not self.trainingDataHasNGram(sentence):
+            warnings.warn('There is no Ngram with that value in the dataset.')
+            return {}
+        # Make copy of dictionary related to the final 2 words of the sentence
+        candidate_dictionary = self.nGramCounts[sentence[-2]][sentence[-1]].copy()
         # Sum all possible word choices in the dictionary
         total_words = sum(candidate_dictionary.values())
         # Divides all counts of words by total words to get probability
@@ -212,9 +277,9 @@ class BiGramModel(NGramModel):
 if __name__ == '__main__':
     text = [ ['the', 'quick', 'brown', 'fox'], ['the', 'lazy', 'dog'] ]
     choices = { 'the': 2, 'quick': 1, 'brown': 1 }
-    nGramModel = BiGramModel()
+    nGramModel = TriGramModel()
     # add your own testing code here if you like
     data = nGramModel.prepData(text)
     nGramModel.trainModel(data)
-    print(nGramModel.getCandidateDictionary(['the']))
-    print(nGramModel.getNextToken(['the']))
+    print(nGramModel.getCandidateDictionary(['the', 'lazy']))
+    print(nGramModel.getNextToken(['the', 'lazy']))
