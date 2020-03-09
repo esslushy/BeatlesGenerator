@@ -200,7 +200,7 @@ class BiGramModel(NGramModel):
         # Make sure data has the ngram being searched for. If not, return an empty dictionary.
         if not self.trainingDataHasNGram(sentence):
             warnings.warn('There is no Ngram with that value in the dataset.')
-            return {}
+            return {'$:::$': 1}
         # Make copy of dictionary related to the final word of the sentence
         candidate_dictionary = self.nGramCounts[sentence[-1]].copy()
         # Sum all possible word choices in the dictionary
@@ -261,7 +261,8 @@ class TriGramModel(NGramModel):
         # Make sure data has the ngram being searched for. If not, return an empty dictionary.
         if not self.trainingDataHasNGram(sentence):
             warnings.warn('There is no Ngram with that value in the dataset.')
-            return {}
+            # Return a terminating dictionary option
+            return {'$:::$': 1}
         # Make copy of dictionary related to the final 2 words of the sentence
         candidate_dictionary = self.nGramCounts[sentence[-2]][sentence[-1]].copy()
         # Sum all possible word choices in the dictionary
